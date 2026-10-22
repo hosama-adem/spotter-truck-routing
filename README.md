@@ -10,7 +10,23 @@
 The free Render service sleeps when idle. The first health call after that can take about a minute.
 
 Day-1 skeleton: a Django + DRF API and a Vite + React + TypeScript client.
-Requirements are in [docs/PRD.md](docs/PRD.md). Routing, weather, risk, and the map are not in this scaffold.
+Requirements are in [docs/PRD.md](docs/PRD.md). Weather, risk, ranking, and the map are not built yet; routing provider choice is below.
+
+## Decisions
+
+**Routing provider: OpenRouteService `driving-hgv`** via `https://api.heigit.org/openrouteservice` (not the deprecated `api.openrouteservice.org` host).
+
+| Finding | Impact |
+|---|---|
+| Free Standard quota | Directions ~2000/day, ~40/min — enough for demos and CI-mocked work |
+| Truck profile | `driving-hgv` with optional HGV restrictions later |
+| Single route distance | Public API allows up to **6,000 km** — Chicago → Denver is fine |
+| Native alternatives | Cap is **3** routes, but only for OD pairs ≤ **100 km** |
+| Long-haul (our PRD OD) | Native `alternative_routes` will not cover Chicago → Denver |
+
+**How we always return 3 routes:** for trips longer than 100 km (and as a fallback when alternatives return fewer than 3), request three separate `driving-hgv` routes: direct, plus left/right mid-corridor via-points (~40 mi perpendicular offset). The `RoutingProvider` interface in `backend/trips/providers/routing.py` keeps Mapbox Directions as a future swap if ORS limits bite harder.
+
+Live check (optional): put a free key from [account.heigit.org](https://account.heigit.org/) in `backend/.env` as `ORS_API_KEY`, then run `backend/.venv/Scripts/python backend/scripts/spike_routing.py`.
 
 ## Run locally
 
@@ -34,6 +50,7 @@ Copy `backend/.env.example` to `backend/.env` and `frontend/.env.example` to `fr
 ```
 backend/                 Django project (config) and the trips app
   trips/domain/          sampling, risk, ranking (later; pure)
-  trips/providers/       routing and weather clients (later)
+  trips/providers/       RoutingProvider + ORS client; weather later
+  scripts/spike_routing.py   optional live ORS check
 frontend/                Vite + React + TypeScript
 ```
