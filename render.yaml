@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: spotter-truck-routing-api
+    runtime: python
+    plan: free
+    branch: main
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python manage.py migrate
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 60
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.11"
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_ALLOWED_HOSTS
+        value: spotter-truck-routing-api.onrender.com
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://spotter-truck-routing.vercel.app
