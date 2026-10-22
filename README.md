@@ -2,6 +2,13 @@
 
 [![CI](https://github.com/hosama-adem/spotter-truck-routing/actions/workflows/ci.yml/badge.svg)](https://github.com/hosama-adem/spotter-truck-routing/actions/workflows/ci.yml)
 
+## Live
+
+- App: https://spotter-truck-routing.vercel.app
+- API health: https://spotter-truck-routing-api.onrender.com/api/health
+
+The free Render service sleeps when idle. The first health call after that can take about a minute.
+
 Day-1 skeleton: a Django + DRF API and a Vite + React + TypeScript client.
 Requirements are in [docs/PRD.md](docs/PRD.md). Routing, weather, risk, and the map are not in this scaffold.
 

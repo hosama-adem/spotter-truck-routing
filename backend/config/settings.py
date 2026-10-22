@@ -4,6 +4,8 @@ from pathlib import Path
 
 import environ
 
+from config.deploy import require_production_secret, with_render_host
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
@@ -13,10 +15,17 @@ environ.Env.read_env(BASE_DIR / ".env")
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="dev-only-insecure-key")
 DEBUG = env("DJANGO_DEBUG")
-ALLOWED_HOSTS = env.list(
-    "DJANGO_ALLOWED_HOSTS",
-    default=["localhost", "127.0.0.1"],
+require_production_secret(debug=DEBUG, secret_key=SECRET_KEY)
+ALLOWED_HOSTS = with_render_host(
+    env.list(
+        "DJANGO_ALLOWED_HOSTS",
+        default=["localhost", "127.0.0.1"],
+    ),
+    env("RENDER_EXTERNAL_HOSTNAME", default=""),
 )
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
