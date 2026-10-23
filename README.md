@@ -10,7 +10,21 @@
 The free Render service sleeps when idle. The first health call after that can take about a minute.
 
 Day-1 skeleton: a Django + DRF API and a Vite + React + TypeScript client.
-Requirements are in [docs/PRD.md](docs/PRD.md). Routing, weather, risk, and the map are not in this scaffold.
+Requirements are in [docs/PRD.md](docs/PRD.md). Weather, risk, ranking, and the map are not built yet.
+
+## Decisions
+
+**Routing provider: OpenRouteService `driving-hgv`** via `https://api.heigit.org/openrouteservice`.
+
+| Finding | Impact |
+|---|---|
+| Free Standard quota | Directions ~2000/day, ~40/min |
+| Truck profile | `driving-hgv` |
+| Single route distance | Up to **6,000 km** on the public API |
+| Native alternatives | Max **3**, but only for OD pairs ≤ **100 km** |
+| Long-haul (Chicago → Denver) | Use via-point requests, not native alternatives |
+
+**How we always return 3 routes:** long trips (and short trips that return fewer than 3 alternatives) request three `driving-hgv` corridors — direct, plus left/right mid-corridor vias (~40 mi offset). API: `GET /api/routes?origin_lat=&origin_lon=&dest_lat=&dest_lon=`. The `RoutingProvider` interface keeps Mapbox as a future swap.
 
 ## Run locally
 
@@ -34,6 +48,6 @@ Copy `backend/.env.example` to `backend/.env` and `frontend/.env.example` to `fr
 ```
 backend/                 Django project (config) and the trips app
   trips/domain/          sampling, risk, ranking (later; pure)
-  trips/providers/       routing and weather clients (later)
+  trips/providers/       geocode + RoutingProvider / ORS client
 frontend/                Vite + React + TypeScript
 ```
