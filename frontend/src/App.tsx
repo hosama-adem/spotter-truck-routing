@@ -1,56 +1,40 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
-type HealthState =
-  | { kind: 'loading' }
-  | { kind: 'ok'; body: string }
-  | { kind: 'error'; message: string }
-
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000').replace(
-  /\/$/,
-  '',
-)
-const healthUrl = `${apiBaseUrl}/api/health`
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError'
-}
+import type { PlanResponse } from './api/types'
+import { TripForm } from './components/TripForm'
 
 function App() {
-  const [health, setHealth] = useState<HealthState>({ kind: 'loading' })
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    fetch(healthUrl, { signal: controller.signal })
-      .then(async (response) => {
-        const body = await response.text()
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`)
-        }
-        setHealth({ kind: 'ok', body })
-      })
-      .catch((error: unknown) => {
-        if (isAbortError(error)) {
-          return
-        }
-        const message = error instanceof Error ? error.message : 'Request failed'
-        setHealth({ kind: 'error', message })
-      })
-
-    return () => controller.abort()
-  }, [])
+  const [plan, setPlan] = useState<PlanResponse | null>(null)
 
   return (
-    <main>
-      <h1>Weather-Aware Truck Routing</h1>
-      <p>Skeleton check against the API.</p>
-      <p>
-        <code>{healthUrl}</code>
-      </p>
-      {health.kind === 'loading' ? <p>Checking backend…</p> : null}
-      {health.kind === 'ok' ? <p>Backend responded: {health.body}</p> : null}
-      {health.kind === 'error' ? (
-        <p>Could not reach the backend ({health.message}). Start it, then refresh.</p>
+    <main className="app-shell">
+      <header className="app-header">
+        <p className="brand">Spotter</p>
+        <h1>Weather-Aware Truck Routing</h1>
+        <p className="lede">
+          Rank three HGV corridors by forecast risk at the time your truck arrives — not by weather
+          right now.
+        </p>
+      </header>
+
+      <TripForm
+        onPlanned={(result) => {
+          setPlan(result)
+        }}
+      />
+
+      {plan ? (
+        <section className="plan-ready" aria-live="polite">
+          <h2>Plan ready</h2>
+          <p>
+            Recommended <strong>Route {plan.recommended_route_id}</strong>
+            {' — '}
+            {plan.recommendation_reason}
+          </p>
+          <p className="plan-ready-meta">
+            {plan.routes.length} routes · map &amp; cards land in the next issue
+          </p>
+        </section>
       ) : null}
     </main>
   )
