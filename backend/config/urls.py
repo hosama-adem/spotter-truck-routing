@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path
 
 from config.health import health
-from trips.views import geocode
+from trips.views import geocode, routes
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -10,4 +10,6 @@ urlpatterns = [
     path("api/health/", health),
     path("api/geocode", geocode),
     path("api/geocode/", geocode),
+    path("api/routes", routes),
+    path("api/routes/", routes),
 ]
