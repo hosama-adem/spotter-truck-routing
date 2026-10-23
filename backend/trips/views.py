@@ -8,6 +8,9 @@ from rest_framework.response import Response
 
 from trips.providers.geocode import PeliasGeocoder
 from trips.providers.routing import LatLon, OpenRouteServiceProvider
+from trips.providers.weather import OpenMeteoWeatherClient
+from trips.serializers import PlanTripSerializer
+from trips.services import PlanInput, plan_trip
 
 
 def _geocoder() -> PeliasGeocoder:
@@ -16,6 +19,10 @@ def _geocoder() -> PeliasGeocoder:
 
 def _router() -> OpenRouteServiceProvider:
     return OpenRouteServiceProvider(api_key=settings.ORS_API_KEY)
+
+
+def _weather() -> OpenMeteoWeatherClient:
+    return OpenMeteoWeatherClient()
 
 
 def _parse_float(raw: str | None, name: str) -> float:
@@ -115,3 +122,37 @@ def routes(request: Request) -> Response:
         )
 
     return Response({"routes": [route.as_dict() for route in options]})
+
+
+@api_view(["POST"])
+def plan(request: Request) -> Response:
+    """Plan three truck routes with weather risk and a recommendation."""
+    serializer = PlanTripSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    data = serializer.validated_data
+    if not settings.ORS_API_KEY:
+        return Response(
+            {"detail": "Routing is not configured (missing ORS_API_KEY)."},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+
+    plan_input = PlanInput(
+        origin=LatLon(lat=data["origin"]["lat"], lon=data["origin"]["lon"]),
+        destination=LatLon(
+            lat=data["destination"]["lat"],
+            lon=data["destination"]["lon"],
+        ),
+        departure_time=data["departure_time"],
+        load_weight_lb=data["load_weight_lb"],
+        checkpoint_interval_mi=data["checkpoint_interval_mi"],
+    )
+
+    try:
+        payload = plan_trip(plan_input, router=_router(), weather=_weather())
+    except RuntimeError as exc:
+        return Response({"detail": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
+
+    return Response(payload)
+
