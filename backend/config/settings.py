@@ -99,6 +99,9 @@ CORS_ALLOWED_ORIGINS = env.list(
     ],
 )
 
+# Shared HeiGIT / OpenRouteService key (directions + Pelias geocode).
+ORS_API_KEY = env("ORS_API_KEY", default="")
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": [
