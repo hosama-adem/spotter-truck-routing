@@ -7,13 +7,23 @@ from trips.providers.routing import (
     RouteOption,
     RoutingProvider,
 )
+from trips.providers.weather import (
+    OpenMeteoWeatherClient,
+    WeatherProvider,
+    WeatherQuery,
+    WeatherSample,
+)
 
 __all__ = [
     "GeocodeProvider",
     "GeocodeResult",
     "LatLon",
+    "OpenMeteoWeatherClient",
     "OpenRouteServiceProvider",
     "PeliasGeocoder",
     "RouteOption",
     "RoutingProvider",
+    "WeatherProvider",
+    "WeatherQuery",
+    "WeatherSample",
 ]
