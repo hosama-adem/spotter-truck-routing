@@ -102,6 +102,14 @@ CORS_ALLOWED_ORIGINS = env.list(
 # Shared HeiGIT / OpenRouteService key (directions + Pelias geocode).
 ORS_API_KEY = env("ORS_API_KEY", default="")
 
+# LocMem by default; swap to Redis in production when available (PRD §8).
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "spotter-truck-routing",
+    }
+}
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": [
