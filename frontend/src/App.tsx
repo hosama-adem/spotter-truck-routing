@@ -1,10 +1,15 @@
 import { useState } from 'react'
 
 import type { PlanResponse } from './api/types'
+import { RouteCards } from './components/RouteCards'
 import { TripForm } from './components/TripForm'
+import { TripMap } from './components/TripMap'
 
 function App() {
   const [plan, setPlan] = useState<PlanResponse | null>(null)
+  const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null)
+
+  const activeRouteId = selectedRouteId ?? plan?.recommended_route_id ?? null
 
   return (
     <main className="app-shell">
@@ -17,25 +22,32 @@ function App() {
         </p>
       </header>
 
-      <TripForm
-        onPlanned={(result) => {
-          setPlan(result)
-        }}
-      />
+      <div className={plan ? 'workspace has-plan' : 'workspace'}>
+        <div className="workspace-form">
+          <TripForm
+            onPlanned={(result: PlanResponse) => {
+              setPlan(result)
+              setSelectedRouteId(result.recommended_route_id)
+            }}
+          />
+        </div>
 
-      {plan ? (
-        <section className="plan-ready" aria-live="polite">
-          <h2>Plan ready</h2>
-          <p>
-            Recommended <strong>Route {plan.recommended_route_id}</strong>
-            {' — '}
-            {plan.recommendation_reason}
-          </p>
-          <p className="plan-ready-meta">
-            {plan.routes.length} routes · map &amp; cards land in the next issue
-          </p>
-        </section>
-      ) : null}
+        {plan && activeRouteId ? (
+          <div className="workspace-results">
+            <TripMap
+              key={plan.recommended_route_id + plan.routes.map((r) => r.id).join('')}
+              plan={plan}
+              selectedRouteId={activeRouteId}
+              onSelectRoute={setSelectedRouteId}
+            />
+            <RouteCards
+              plan={plan}
+              selectedRouteId={activeRouteId}
+              onSelect={setSelectedRouteId}
+            />
+          </div>
+        ) : null}
+      </div>
     </main>
   )
 }
