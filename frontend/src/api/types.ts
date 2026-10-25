@@ -59,3 +59,26 @@ export type PlanResponse = {
   recommendation_reason: string
   routes: PlannedRoute[]
 }
+
+/** Inputs needed again for POST /api/weather/heatmap after a plan. */
+export type TripPlanContext = {
+  departure_time: string
+  load_weight_lb: number
+}
+
+export type HeatmapRequest = {
+  departure_time: string
+  load_weight_lb: number
+  geometry: {
+    type: 'LineString'
+    coordinates: [number, number][]
+  }
+}
+
+/** Compact corridor × 49 hourly risk frames (PRD §7). */
+export type HeatmapResponse = {
+  start_time: string
+  hours: number
+  points: [number, number][]
+  risk: number[][]
+}

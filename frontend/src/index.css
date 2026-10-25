@@ -305,6 +305,12 @@ input {
   cursor: wait;
 }
 
+.trip-map-panel {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
 .trip-map-shell {
   position: relative;
   height: min(32rem, 70vh);
@@ -314,6 +320,85 @@ input {
   overflow: hidden;
   background: #dfe7ee;
   box-shadow: var(--shadow);
+}
+
+.truck-marker {
+  width: 1.35rem;
+  height: 1.35rem;
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 35%));
+}
+
+.truck-marker-dot {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 999px;
+  background: #0f6e56;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 3px rgb(15 110 86 / 28%);
+}
+
+.heatmap-slider {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  padding: 0.75rem 0.9rem 0.85rem;
+  box-shadow: var(--shadow);
+}
+
+.heatmap-slider-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.45rem;
+}
+
+.heatmap-slider-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.heatmap-slider-value {
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.heatmap-slider input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.heatmap-slider input[type='range']:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.heatmap-slider-ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.heatmap-status {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.heatmap-status-ok {
+  color: var(--accent);
+}
+
+.heatmap-status-error {
+  color: var(--danger);
 }
 
 .trip-map-shell .maplibregl-popup-content {
