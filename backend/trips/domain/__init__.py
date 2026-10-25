@@ -1,5 +1,6 @@
-"""Pure trip logic: sampling, risk, and ranking. No I/O."""
+"""Pure trip logic: sampling, risk, ranking, corridor grid. No I/O."""
 
+from trips.domain.corridor import MAX_GRID_POINTS, sample_corridor_grid
 from trips.domain.ranking import (
     RankedCheckpoint,
     RankingResult,
@@ -17,6 +18,7 @@ from trips.domain.sampling import (
 __all__ = [
     "ALLOWED_INTERVALS_MI",
     "Checkpoint",
+    "MAX_GRID_POINTS",
     "RankedCheckpoint",
     "RankingResult",
     "RiskAssessment",
@@ -26,4 +28,5 @@ __all__ = [
     "classify_checkpoint",
     "rank_routes",
     "sample_checkpoints",
+    "sample_corridor_grid",
 ]

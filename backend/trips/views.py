@@ -6,10 +6,11 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from trips.heatmap import HeatmapInput, build_heatmap
 from trips.providers.geocode import PeliasGeocoder
 from trips.providers.routing import LatLon, OpenRouteServiceProvider
 from trips.providers.weather import OpenMeteoWeatherClient
-from trips.serializers import PlanTripSerializer
+from trips.serializers import HeatmapSerializer, PlanTripSerializer
 from trips.services import PlanInput, plan_trip
 
 
@@ -151,6 +152,31 @@ def plan(request: Request) -> Response:
 
     try:
         payload = plan_trip(plan_input, router=_router(), weather=_weather())
+    except RuntimeError as exc:
+        return Response({"detail": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
+
+    return Response(payload)
+
+
+@api_view(["POST"])
+def heatmap(request: Request) -> Response:
+    """Return 49 hourly corridor risk frames (compact arrays)."""
+    serializer = HeatmapSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    data = serializer.validated_data
+    geometry = [(float(lon), float(lat)) for lon, lat in data["geometry"]["coordinates"]]
+    heatmap_input = HeatmapInput(
+        geometry=geometry,
+        departure_time=data["departure_time"],
+        load_weight_lb=data["load_weight_lb"],
+    )
+
+    try:
+        payload = build_heatmap(heatmap_input, weather=_weather())
+    except ValueError as exc:
+        return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
     except RuntimeError as exc:
         return Response({"detail": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
 
