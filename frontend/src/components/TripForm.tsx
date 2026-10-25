@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 
 import { ApiError } from '../api/client'
 import { planTrip } from '../api/plan'
-import type { Place, PlanResponse } from '../api/types'
+import type { Place, PlanResponse, TripPlanContext } from '../api/types'
 import {
   defaultDepartureLocal,
   localInputToIsoWithOffset,
@@ -29,7 +29,7 @@ type FieldErrors = Partial<
 >
 
 type TripFormProps = {
-  onPlanned: (result: PlanResponse) => void
+  onPlanned: (result: PlanResponse, context: TripPlanContext) => void
 }
 
 function emptyValues(): TripFormValues {
@@ -109,14 +109,16 @@ export function TripForm({ onPlanned }: TripFormProps) {
     const destination = values.destination!
     setLoading(true)
     try {
+      const departure_time = localInputToIsoWithOffset(values.departureLocal)
+      const load_weight_lb = Number(values.loadWeightLb)
       const result = await planTrip({
         origin,
         destination,
-        departure_time: localInputToIsoWithOffset(values.departureLocal),
-        load_weight_lb: Number(values.loadWeightLb),
+        departure_time,
+        load_weight_lb,
         checkpoint_interval_mi: values.checkpointIntervalMi,
       })
-      onPlanned(result)
+      onPlanned(result, { departure_time, load_weight_lb })
     } catch (err: unknown) {
       setFormError(
         err instanceof ApiError
