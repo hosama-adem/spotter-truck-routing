@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path
 
 from config.health import health
-from trips.views import geocode, plan, routes
+from trips.views import geocode, heatmap, plan, routes
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -14,4 +14,6 @@ urlpatterns = [
     path("api/routes/", routes),
     path("api/trips/plan", plan),
     path("api/trips/plan/", plan),
+    path("api/weather/heatmap", heatmap),
+    path("api/weather/heatmap/", heatmap),
 ]
