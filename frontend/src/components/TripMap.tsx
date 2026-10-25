@@ -28,6 +28,7 @@ import { buildHeatmapFrames } from '../lib/heatmapFrames'
 import { RISK_COLORS, RISK_LABELS, riskRgba } from '../lib/riskColors'
 import { HeatmapSlider } from './HeatmapSlider'
 import { RiskLegend } from './RiskLegend'
+import { StatusBanner } from './StatusBanner'
 
 const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
 const MAX_SLIDER_HOUR = 48
@@ -39,6 +40,7 @@ type TripMapProps = {
   heatmap: HeatmapResponse | null
   heatmapLoading: boolean
   heatmapError: string | null
+  onRetryHeatmap: () => void
   hour: number
   onHourChange: (hour: number) => void
 }
@@ -60,6 +62,7 @@ export function TripMap({
   heatmap,
   heatmapLoading,
   heatmapError,
+  onRetryHeatmap,
   hour,
   onHourChange,
 }: TripMapProps) {
@@ -160,7 +163,20 @@ export function TripMap({
 
   return (
     <div className="trip-map-panel">
-      <div className="trip-map-shell">
+      <div
+        className={[
+          'trip-map-shell',
+          heatmapLoading && !heatmap ? 'is-heatmap-loading' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {heatmapLoading && !heatmap ? (
+          <div className="map-loading-veil" aria-live="polite">
+            <span className="map-loading-pulse" />
+            <p>Loading corridor heatmap…</p>
+          </div>
+        ) : null}
         <Map
           ref={setMapRef}
           mapStyle={MAP_STYLE}
@@ -232,19 +248,27 @@ export function TripMap({
         onChange={onHourChange}
       />
 
-      {heatmapLoading ? (
-        <p className="heatmap-status">Loading corridor heatmap…</p>
-      ) : null}
       {heatmapError ? (
-        <p className="heatmap-status heatmap-status-error" role="alert">
-          {heatmapError}
-        </p>
+        <StatusBanner
+          tone="error"
+          title="Heatmap unavailable"
+          message={heatmapError}
+          actionLabel="Retry heatmap"
+          actionDisabled={heatmapLoading}
+          onAction={onRetryHeatmap}
+        />
       ) : null}
-      {heatmap && !heatmapLoading ? (
-        <p className="heatmap-status heatmap-status-ok">
-          {heatmap.points.length} corridor points · {heatmap.hours} frames loaded — scrubbing is
-          local only
-        </p>
+      {heatmapLoading && heatmap ? (
+        <StatusBanner
+          tone="info"
+          message="Refreshing corridor heatmap…"
+        />
+      ) : null}
+      {heatmap && !heatmapLoading && !heatmapError ? (
+        <StatusBanner
+          tone="success"
+          message={`${heatmap.points.length} corridor points · ${heatmap.hours} frames loaded — scrubbing stays local (no network).`}
+        />
       ) : null}
     </div>
   )
