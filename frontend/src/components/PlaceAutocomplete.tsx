@@ -1,8 +1,8 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 
-import { ApiError } from '../api/client'
 import { searchPlaces } from '../api/geocode'
 import type { Place } from '../api/types'
+import { humanizeApiError } from '../lib/errors'
 
 const DEBOUNCE_MS = 300
 const MIN_QUERY_LEN = 2
@@ -37,7 +37,9 @@ export function PlaceAutocomplete({
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
+  const [emptyMessage, setEmptyMessage] = useState<string | null>(null)
   const [highlight, setHighlight] = useState(-1)
+  const [retryToken, setRetryToken] = useState(0)
 
   const trimmed = query.trim()
   const resolved = Boolean(value && trimmed === value.label)
@@ -52,11 +54,18 @@ export function PlaceAutocomplete({
     const timer = window.setTimeout(() => {
       setLoading(true)
       setSearchError(null)
+      setEmptyMessage(null)
       searchPlaces(trimmed, controller.signal)
         .then((results) => {
           setSuggestions(results)
-          setOpen(true)
           setHighlight(-1)
+          if (results.length === 0) {
+            setOpen(false)
+            setEmptyMessage('No places found — try a city name or a fuller address.')
+          } else {
+            setOpen(true)
+            setEmptyMessage(null)
+          }
         })
         .catch((err: unknown) => {
           if (err instanceof Error && err.name === 'AbortError') {
@@ -64,20 +73,19 @@ export function PlaceAutocomplete({
           }
           setSuggestions([])
           setOpen(false)
+          setEmptyMessage(null)
           setSearchError(
-            err instanceof ApiError
-              ? err.message
-              : 'Could not search places. Try again.',
+            humanizeApiError(err, 'Could not search places. Try again.'),
           )
         })
         .finally(() => setLoading(false))
-    }, DEBOUNCE_MS)
+    }, retryToken > 0 ? 0 : DEBOUNCE_MS)
 
     return () => {
       window.clearTimeout(timer)
       controller.abort()
     }
-  }, [canSearch, trimmed])
+  }, [canSearch, trimmed, retryToken])
 
   useEffect(() => {
     function onPointerDown(event: MouseEvent) {
@@ -96,6 +104,7 @@ export function PlaceAutocomplete({
     setOpen(false)
     setHighlight(-1)
     setSearchError(null)
+    setEmptyMessage(null)
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -140,6 +149,8 @@ export function PlaceAutocomplete({
           placeholder="City, state, or address"
           onChange={(event) => {
             onQueryChange(event.target.value)
+            setEmptyMessage(null)
+            setSearchError(null)
           }}
           onFocus={() => {
             if (canSearch && suggestions.length > 0) {
@@ -175,8 +186,21 @@ export function PlaceAutocomplete({
         ) : null}
       </div>
       {resolvedHint ? <p className="field-hint">{resolvedHint}</p> : null}
+      {emptyMessage && canSearch && !loading ? (
+        <p className="field-hint field-empty">{emptyMessage}</p>
+      ) : null}
       {searchError && canSearch ? (
-        <p className="field-error">{searchError}</p>
+        <div className="field-inline-error">
+          <p className="field-error">{searchError}</p>
+          <button
+            type="button"
+            className="btn-link"
+            disabled={disabled || loading}
+            onClick={() => setRetryToken((token) => token + 1)}
+          >
+            Retry search
+          </button>
+        </div>
       ) : null}
       {error ? <p className="field-error">{error}</p> : null}
     </div>

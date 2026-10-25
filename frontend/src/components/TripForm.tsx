@@ -1,13 +1,14 @@
 import { useState, type FormEvent } from 'react'
 
-import { ApiError } from '../api/client'
 import { planTrip } from '../api/plan'
 import type { Place, PlanResponse, TripPlanContext } from '../api/types'
 import {
   defaultDepartureLocal,
   localInputToIsoWithOffset,
 } from '../lib/datetime'
+import { humanizeApiError } from '../lib/errors'
 import { PlaceAutocomplete } from './PlaceAutocomplete'
+import { StatusBanner } from './StatusBanner'
 
 const INTERVALS = [10, 25, 50] as const
 const MIN_LOAD_LB = 1
@@ -96,8 +97,7 @@ export function TripForm({ onPlanned }: TripFormProps) {
   const [formError, setFormError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function runPlan() {
     const nextErrors = validate(values, originQuery, destQuery)
     setErrors(nextErrors)
     setFormError(null)
@@ -118,24 +118,51 @@ export function TripForm({ onPlanned }: TripFormProps) {
         load_weight_lb,
         checkpoint_interval_mi: values.checkpointIntervalMi,
       })
+      if (!result.routes.length) {
+        setFormError(
+          'No truck routes came back for this trip. Try different places or another departure time.',
+        )
+        return
+      }
       onPlanned(result, { departure_time, load_weight_lb })
     } catch (err: unknown) {
       setFormError(
-        err instanceof ApiError
-          ? err.message
-          : 'Could not plan this trip. Check the API and try again.',
+        humanizeApiError(
+          err,
+          'Could not plan this trip. Check the API and try again.',
+        ),
       )
     } finally {
       setLoading(false)
     }
   }
 
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    await runPlan()
+  }
+
   return (
-    <form className="trip-form" onSubmit={onSubmit} noValidate>
+    <form
+      className={['trip-form', loading ? 'is-loading' : ''].filter(Boolean).join(' ')}
+      onSubmit={onSubmit}
+      noValidate
+    >
       <header className="trip-form-header">
         <h2>Plan a trip</h2>
-        <p>Set origin, destination, departure, and load — we&apos;ll rank three truck corridors by weather risk.</p>
+        <p>
+          Set origin, destination, departure, and load — we&apos;ll rank three truck corridors by
+          weather risk.
+        </p>
       </header>
+
+      {loading ? (
+        <StatusBanner
+          tone="info"
+          title="Planning routes"
+          message="Fetching three HGV corridors and scoring weather risk at each checkpoint…"
+        />
+      ) : null}
 
       <div className="trip-form-grid">
         <PlaceAutocomplete
@@ -247,9 +274,16 @@ export function TripForm({ onPlanned }: TripFormProps) {
       </div>
 
       {formError ? (
-        <p className="form-banner form-banner-error" role="alert">
-          {formError}
-        </p>
+        <StatusBanner
+          tone="error"
+          title="Couldn’t plan this trip"
+          message={formError}
+          actionLabel="Retry"
+          actionDisabled={loading}
+          onAction={() => {
+            void runPlan()
+          }}
+        />
       ) : null}
 
       <div className="trip-form-actions">

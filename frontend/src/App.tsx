@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 
-import { ApiError } from './api/client'
 import { fetchHeatmap } from './api/heatmap'
 import type { HeatmapResponse, PlanResponse, TripPlanContext } from './api/types'
 import { RouteCards } from './components/RouteCards'
+import { StatusBanner } from './components/StatusBanner'
 import { TripForm } from './components/TripForm'
 import { TripMap } from './components/TripMap'
+import { humanizeApiError } from './lib/errors'
 
 function App() {
   const [plan, setPlan] = useState<PlanResponse | null>(null)
@@ -14,12 +15,14 @@ function App() {
   const [heatmap, setHeatmap] = useState<HeatmapResponse | null>(null)
   const [heatmapLoading, setHeatmapLoading] = useState(false)
   const [heatmapError, setHeatmapError] = useState<string | null>(null)
+  const [heatmapRetry, setHeatmapRetry] = useState(0)
   const [hour, setHour] = useState(0)
 
   const activeRouteId = selectedRouteId ?? plan?.recommended_route_id ?? null
+  const emptyPlan = Boolean(plan && plan.routes.length === 0)
 
   useEffect(() => {
-    if (!plan || !tripContext) {
+    if (!plan || !tripContext || plan.routes.length === 0) {
       return
     }
     const recommended = plan.routes.find(
@@ -49,9 +52,7 @@ function App() {
         }
         setHeatmap(null)
         setHeatmapError(
-          err instanceof ApiError
-            ? err.message
-            : 'Could not load corridor heatmap.',
+          humanizeApiError(err, 'Could not load corridor heatmap.'),
         )
       })
       .finally(() => {
@@ -61,7 +62,7 @@ function App() {
       })
 
     return () => controller.abort()
-  }, [plan, tripContext])
+  }, [plan, tripContext, heatmapRetry])
 
   return (
     <main className="app-shell">
@@ -74,7 +75,7 @@ function App() {
         </p>
       </header>
 
-      <div className={plan ? 'workspace has-plan' : 'workspace'}>
+      <div className={plan && !emptyPlan ? 'workspace has-plan' : 'workspace'}>
         <div className="workspace-form">
           <TripForm
             onPlanned={(result, context) => {
@@ -84,12 +85,20 @@ function App() {
               setHeatmap(null)
               setHeatmapError(null)
               setHour(0)
-              setHeatmapLoading(true)
+              setHeatmapLoading(result.routes.length > 0)
             }}
           />
         </div>
 
-        {plan && activeRouteId ? (
+        {emptyPlan ? (
+          <StatusBanner
+            tone="error"
+            title="No routes to show"
+            message="The planner returned an empty route set. Change origin, destination, or departure and plan again."
+          />
+        ) : null}
+
+        {plan && activeRouteId && !emptyPlan ? (
           <div className="workspace-results">
             <TripMap
               key={plan.recommended_route_id + plan.routes.map((r) => r.id).join('')}
@@ -99,6 +108,11 @@ function App() {
               heatmap={heatmap}
               heatmapLoading={heatmapLoading}
               heatmapError={heatmapError}
+              onRetryHeatmap={() => {
+                setHeatmapLoading(true)
+                setHeatmapError(null)
+                setHeatmapRetry((token) => token + 1)
+              }}
               hour={hour}
               onHourChange={setHour}
             />

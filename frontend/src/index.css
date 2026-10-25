@@ -263,24 +263,23 @@ input {
   pointer-events: none;
 }
 
-.form-banner {
-  margin: 1rem 0 0;
-  padding: 0.75rem 0.9rem;
-  border-radius: 0.65rem;
-  font-size: 0.92rem;
-}
-
-.form-banner-error {
-  background: var(--danger-soft);
-  color: var(--danger);
-}
-
 .trip-form-actions {
   margin-top: 1.25rem;
 }
 
-.btn-primary {
+.trip-form.is-loading .trip-form-grid {
+  opacity: 0.72;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-link {
   appearance: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.btn-primary {
   border: 0;
   border-radius: 0.75rem;
   background: var(--accent);
@@ -288,7 +287,6 @@ input {
   font-weight: 700;
   letter-spacing: 0.01em;
   padding: 0.85rem 1.2rem;
-  cursor: pointer;
   transition:
     transform 0.12s ease,
     opacity 0.12s ease,
@@ -303,6 +301,97 @@ input {
 .btn-primary:disabled {
   opacity: 0.7;
   cursor: wait;
+}
+
+.btn-secondary {
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 650;
+  padding: 0.55rem 0.85rem;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: #a9b8c6;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.btn-link {
+  border: 0;
+  background: transparent;
+  color: var(--focus);
+  font-size: 0.82rem;
+  font-weight: 650;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.btn-link:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  margin-top: 1rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 0.75rem;
+  border: 1px solid transparent;
+}
+
+.status-banner-copy {
+  min-width: 0;
+}
+
+.status-banner-title {
+  margin: 0 0 0.15rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.status-banner-message {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.status-banner-info {
+  background: #eef5fb;
+  border-color: #c5d7ea;
+  color: #1d4e89;
+}
+
+.status-banner-error {
+  background: var(--danger-soft);
+  border-color: #f0b4b4;
+  color: var(--danger);
+}
+
+.status-banner-success {
+  background: #e7f5ef;
+  border-color: #b7dfcb;
+  color: #0c5c48;
+}
+
+.field-inline-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.55rem 0.75rem;
+}
+
+.field-empty {
+  color: #8a5a00;
 }
 
 .trip-map-panel {
@@ -387,18 +476,43 @@ input {
   color: var(--muted);
 }
 
-.heatmap-status {
+.map-loading-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-content: center;
+  gap: 0.65rem;
+  justify-items: center;
+  background: rgb(238 242 245 / 72%);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+}
+
+.map-loading-veil p {
   margin: 0;
-  font-size: 0.82rem;
-  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--ink);
 }
 
-.heatmap-status-ok {
-  color: var(--accent);
+.map-loading-pulse {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 999px;
+  border: 3px solid rgb(15 110 86 / 25%);
+  border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
 }
 
-.heatmap-status-error {
-  color: var(--danger);
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.trip-map-panel .status-banner {
+  margin-top: 0;
 }
 
 .trip-map-shell .maplibregl-popup-content {
